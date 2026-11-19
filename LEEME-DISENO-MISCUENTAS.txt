@@ -1,0 +1,14 @@
+MIS APPS — ACTUALIZACIÓN DE DISEÑO DE MISCUENTAS
+
+Esta versión modifica ÚNICAMENTE la aplicación MisCuentas:
+- Fondo verde bosque oscuro en las pantallas de MisCuentas.
+- Tarjetas de cuenta cuadradas, en una cuadrícula adaptable.
+- Tarjetas claras con texto oscuro y saldo destacado.
+- Botones verde billete.
+- Limpieza defensiva del texto suelto literal \\n.
+- Nueva versión de caché de MisCuentas.
+
+SUBIDA
+Descomprime el ZIP y sube TODO su contenido a la raíz del repositorio misapps, sustituyendo los archivos existentes y manteniendo la estructura de carpetas.
+No ejecutes SQL ni modifiques Supabase.
+Después de publicar, abre MisCuentas y haz una recarga completa (Ctrl+Shift+R) si el navegador conserva la versión anterior.
