@@ -1,4 +1,4 @@
-const V="cuentas-nube-v7-unificado";
+const V="cuentas-nube-v8-verde-oscuro";
 const FILES=["./","index.html","supabase-config.js","manifest.webmanifest","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png"];
 self.addEventListener("install",e=>{
   e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));

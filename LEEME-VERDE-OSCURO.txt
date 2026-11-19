@@ -1,0 +1,14 @@
+ACTUALIZACIÓN DE MISCUENTAS — FONDO VERDE OSCURO
+
+Sube TODO el contenido de este ZIP a la raíz del repositorio misapps, sustituyendo los archivos anteriores.
+No subas una carpeta contenedora adicional.
+
+Cambios:
+- Fondo general verde oscuro.
+- Tarjetas y formularios claros para mantener la lectura.
+- Botones y acentos verde billete.
+- Texto y etiquetas ajustados para que haya contraste.
+- Eliminado el texto literal \\n que aparecía encima del botón «Volver al inicio».
+- Nueva versión de caché de MisCuentas.
+
+No ejecutes SQL ni modifiques Supabase.
