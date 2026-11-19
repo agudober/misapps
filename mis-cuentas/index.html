@@ -64,6 +64,14 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .catform{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.catform input[type=text]{flex:1 1 150px;width:auto}.catform select{width:auto}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);width:calc(100% - 32px);max-width:420px;padding:18px}
 dialog::backdrop{background:rgba(0,0,0,.45)}
+/* Modal de creación/edición: texto oscuro y legible sobre el fondo claro */
+dialog,dialog h1,dialog h2,dialog p,dialog label,dialog small{color:#173b2b}
+dialog input,dialog select,dialog textarea{color:#173b2b;background:#f3faf5}
+dialog input::placeholder,dialog textarea::placeholder{color:#587362;opacity:1}
+dialog select option{color:#173b2b;background:#f8fcf9}
+dialog button:not(.p){color:#173b2b;background:#f8fcf9;border-color:#c9dfd0}
+dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
+
 @media (max-width:560px){.sums{grid-template-columns:1fr}.grid>*,.grid .w3{grid-column:span 6}}
 .accbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
 .back{border:0;background:none;padding:0;color:var(--muted);margin-bottom:6px}
