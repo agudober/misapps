@@ -1,0 +1,29 @@
+MIS APPS — REPOSITORIO ÚNICO (RECONSTRUCCIÓN)
+
+ESTRUCTURA
+- index.html: inicio de Mis apps
+- mis-cuentas/: aplicación MisCuentas
+- horarios/: aplicación Mis horarios
+- apps.js, config.js, sw.js, manifest.webmanifest e icons/: archivos de Mis apps
+
+CREAR EL REPOSITORIO DESDE CERO
+1. En GitHub, crea un repositorio nuevo llamado exactamente: misapps
+2. Configúralo como público si quieres usar GitHub Pages gratis.
+3. Sube TODO el contenido de este ZIP a la raíz del repositorio. No subas la carpeta contenedora del ZIP: index.html debe quedar en la raíz.
+4. En Settings > Pages, elige Deploy from a branch, rama main y carpeta /(root). Guarda.
+5. Espera a que termine el despliegue.
+
+DIRECCIONES
+- Inicio: https://agudober.github.io/misapps/
+- MisCuentas: https://agudober.github.io/misapps/mis-cuentas/
+- Mis horarios: https://agudober.github.io/misapps/horarios/
+
+BASE DE DATOS SUPABASE
+La base de datos existente NO se debe borrar ni recrear.
+No ejecutes de nuevo schema.sql ni migraciones si ya están aplicadas.
+Se conserva el archivo mis-cuentas/supabase-config.js del respaldo. Comprueba que contiene la URL y la clave pública (anon/publishable) del proyecto Supabase que sigue existiendo.
+No incluyas nunca una service_role/secret key en el HTML.
+
+IMPORTANTE
+Este paquete reconstruye el repositorio web; no crea, modifica ni elimina datos de Supabase.
+Antes de eliminar o archivar cualquier otro repositorio, comprueba que las tres direcciones funcionan.
