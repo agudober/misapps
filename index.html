@@ -43,6 +43,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 #login input{width:100%;font-size:16px;margin:6px 0;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--ink)}
 #login button{width:100%;margin-top:8px;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700}
 #login button:disabled{opacity:.6}
+#forgot{display:block;width:100%;margin-top:12px;padding:4px;border:0;background:transparent;color:var(--ac);font-weight:650}
+#recovery{max-width:340px;margin:14vh auto 0;padding:24px;border-radius:24px;background:var(--sf);border:1px solid var(--bd);backdrop-filter:blur(8px)}
+#recovery input{width:100%;font-size:16px;margin:6px 0;padding:11px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--ink)}
+#recovery button{width:100%;margin-top:8px;padding:12px;border:0;border-radius:12px;background:var(--ac);color:#fff;font-weight:700}
+#backLogin{background:transparent!important;color:var(--ac)!important}
 .err{color:var(--red);font-size:14px;min-height:20px;margin:4px 0 0}
 </style>
 </head>
@@ -55,6 +60,23 @@ button{font:inherit;color:inherit;cursor:pointer}
   <input id="pw" type="password" placeholder="Contraseña" autocomplete="current-password">
   <p class="err" id="lerr"></p>
   <button id="lbtn">Entrar</button>
+  <button id="forgot" type="button">He olvidado mi contraseña</button>
+</section>
+
+<section id="recovery" hidden>
+  <h1 id="rtitle" style="font-size:1.5rem">Recuperar acceso</h1>
+  <p class="sub" id="rdesc" style="margin-bottom:14px">Te enviaremos un enlace para crear una contraseña nueva.</p>
+  <div id="requestForm">
+    <input id="remail" type="email" placeholder="Correo de tu cuenta" autocomplete="email" inputmode="email">
+    <button id="sendReset">Enviar enlace</button>
+  </div>
+  <div id="setPasswordForm" hidden>
+    <input id="newPassword" type="password" placeholder="Nueva contraseña" autocomplete="new-password">
+    <input id="confirmPassword" type="password" placeholder="Repite la contraseña" autocomplete="new-password">
+    <button id="savePassword">Guardar contraseña</button>
+  </div>
+  <p class="err" id="rerr"></p>
+  <button id="backLogin" type="button">Volver al inicio de sesión</button>
 </section>
 
 <main id="home" hidden>
@@ -105,6 +127,45 @@ $("lbtn").onclick=async()=>{
   finally{$("lbtn").disabled=false;$("lbtn").textContent="Entrar"}
 };
 $("pw").onkeydown=e=>{if(e.key==="Enter")$("lbtn").click()};
+let recoveryAuth=null;
+const showRecovery=(reset=false)=>{
+  $("login").hidden=true;$("home").hidden=true;$("recovery").hidden=false;
+  $("requestForm").hidden=reset;$("setPasswordForm").hidden=!reset;
+  $("rtitle").textContent=reset?"Crear contraseña nueva":"Recuperar acceso";
+  $("rdesc").textContent=reset?"Elige una contraseña nueva para tu cuenta.":"Te enviaremos un enlace para crear una contraseña nueva.";
+  $("rerr").textContent="";
+};
+$("forgot").onclick=()=>showRecovery(false);
+$("backLogin").onclick=()=>{history.replaceState(null,"",location.pathname);$("recovery").hidden=true;$("login").hidden=false;$("rerr").textContent=""};
+$("sendReset").onclick=async()=>{
+  const email=$("remail").value.trim();
+  if(!email){$("rerr").textContent="Escribe el correo de tu cuenta.";return}
+  if(!recoveryAuth){$("rerr").textContent="El servicio de recuperación aún no está listo. Recarga la página.";return}
+  $("sendReset").disabled=true;$("sendReset").textContent="Enviando…";$("rerr").textContent="";
+  try{
+    const result=await recoveryAuth.requestPasswordReset({email,redirectTo:location.origin+location.pathname});
+    if(result?.error)throw result.error;
+    $("rerr").style.color="var(--ac)";
+    $("rerr").textContent="Solicitud enviada. Revisa el correo y también la carpeta de spam.";
+  }catch(e){console.error(e);$("rerr").style.color="var(--red)";$("rerr").textContent="Neon Auth: "+(e?.message||String(e))}
+  finally{$("sendReset").disabled=false;$("sendReset").textContent="Enviar enlace"}
+};
+$("savePassword").onclick=async()=>{
+  const token=new URLSearchParams(location.search).get("token");
+  const password=$("newPassword").value,confirm=$("confirmPassword").value;
+  if(!token){$("rerr").textContent="El enlace no contiene un token válido. Solicita otro.";return}
+  if(password.length<8){$("rerr").textContent="La contraseña debe tener al menos 8 caracteres.";return}
+  if(password!==confirm){$("rerr").textContent="Las contraseñas no coinciden.";return}
+  $("savePassword").disabled=true;$("savePassword").textContent="Guardando…";$("rerr").textContent="";
+  try{
+    const result=await recoveryAuth.resetPassword({newPassword:password,token});
+    if(result?.error)throw result.error;
+    $("rerr").style.color="var(--ac)";$("rerr").textContent="Contraseña actualizada. Ya puedes iniciar sesión.";
+    $("newPassword").value="";$("confirmPassword").value="";
+    setTimeout(()=>{$("backLogin").click()},1800);
+  }catch(e){console.error(e);$("rerr").style.color="var(--red)";$("rerr").textContent="Neon Auth: "+(e?.message||String(e))}
+  finally{$("savePassword").disabled=false;$("savePassword").textContent="Guardar contraseña"}
+};
 $("profileBtn").onclick=()=>{
   const open=$("profileMenu").hidden;$("profileMenu").hidden=!open;
   $("profileBtn").setAttribute("aria-expanded",String(open));
@@ -117,11 +178,14 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
   try{
     const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
     const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
+    recoveryAuth=createClient({auth:{url:NEON_AUTH_URL}}).auth;
     window.neonAuth=client.auth;
     client.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
     const {data,error}=await client.auth.getSession();
     if(error)throw error;
-    show(data.session?.user||null);
+    const resetToken=new URLSearchParams(location.search).get("token");
+    if(resetToken)showRecovery(true);
+    else show(data.session?.user||null);
   }catch(e){
     console.error("No se pudo inicializar Neon:",e);
     $("login").hidden=false;$("home").hidden=true;
