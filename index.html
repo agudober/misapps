@@ -199,9 +199,6 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
     const resetToken=resetParams.get("token")||hashParams.get("token");
     const resetError=resetParams.get("error")||hashParams.get("error");
     const isResetFlow=!!(resetToken||resetError);
-    client.auth.onAuthStateChange((_e,s)=>{
-      if(!isResetFlow)show(s?.user||null);
-    });
     const {data,error}=await client.auth.getSession();
     if(error)throw error;
     if(isResetFlow){
