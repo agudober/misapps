@@ -206,7 +206,7 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 <script type="module">
 import {createClient,BetterAuthVanillaAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken,captureNeonJwt} from "../session.js?v=7";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken,captureNeonJwt} from "../session.js?v=8";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -273,7 +273,7 @@ $("login").onclick=async()=>{
   try{
     const result=await sb.auth.signIn.email({email:$("email").value.trim(),password:$("pass").value});
     if(result?.error)throw result.error;
-    const signedUser=saveNeonAuthResult(result);
+    const signedUser=saveNeonAuthResult(result,sb.auth);
     setUser(signedUser);
   }catch(err){$("loginErr").textContent=/invalid|credential/i.test(err.message||"")?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión: "+(err.message||"Comprueba tu conexión.")}
   finally{btn.disabled=false;btn.textContent="Entrar"}
