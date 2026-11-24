@@ -16,20 +16,32 @@ export function captureNeonJwt(ctx) {
   if (token) localStorage.setItem(NEON_TOKEN_KEY, token);
 }
 
-export function saveNeonAuthResult(result) {
+export async function saveNeonAuthResult(result, auth) {
   const payload = result?.data ?? result;
   const user = payload?.user || payload?.data?.user || result?.user;
-  const storedToken = localStorage.getItem(NEON_TOKEN_KEY);
-  const responseToken =
-    payload?.session?.token ||
-    payload?.token ||
-    payload?.session?.access_token ||
-    payload?.access_token;
-  const token = isJwt(storedToken) ? storedToken : (isJwt(responseToken) ? responseToken : null);
-  if (!token || !user?.id) {
-    // Discard only an invalid cached credential, never application records.
+  let token = localStorage.getItem(NEON_TOKEN_KEY);
+
+  // Better Auth no garantiza el JWT de Data API en la respuesta de sign-in.
+  // Neon expone el JWT mediante el endpoint oficial /token (jwtClient).
+  if (!isJwt(token) && typeof auth?.token === "function") {
+    const tokenResult = await auth.token();
+    if (tokenResult?.error) throw tokenResult.error;
+    token = tokenResult?.data?.token || tokenResult?.token || null;
+  }
+
+  // Respaldo oficial de Neon: /get-session devuelve el JWT en set-auth-jwt.
+  if (!isJwt(token) && typeof auth?.getSession === "function") {
+    const sessionResult = await auth.getSession({
+      fetchOptions: { onSuccess: captureNeonJwt }
+    });
+    if (sessionResult?.error) throw sessionResult.error;
+    token = localStorage.getItem(NEON_TOKEN_KEY) ||
+      sessionResult?.data?.session?.token || null;
+  }
+
+  if (!isJwt(token) || !user?.id) {
     clearNeonAuth();
-    throw new Error("Neon ha validado el acceso, pero no ha entregado un JWT válido para la base de datos. No se ha modificado ni borrado ningún dato.");
+    throw new Error("Neon ha validado el acceso, pero su servicio JWT no ha devuelto un token válido para la base de datos. No se ha modificado ni borrado ningún dato.");
   }
   localStorage.setItem(NEON_TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
