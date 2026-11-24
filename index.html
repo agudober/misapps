@@ -151,7 +151,7 @@ $("sendReset").onclick=async()=>{
   finally{$("sendReset").disabled=false;$("sendReset").textContent="Enviar enlace"}
 };
 $("savePassword").onclick=async()=>{
-  const token=new URLSearchParams(location.search).get("token");
+  const token=new URLSearchParams(location.search).get("token")||new URLSearchParams(location.hash.replace(/^#/,"")).get("token");
   const password=$("newPassword").value,confirm=$("confirmPassword").value;
   if(!token){$("rerr").textContent="El enlace no contiene un token válido. Solicita otro.";return}
   if(password.length<8){$("rerr").textContent="La contraseña debe tener al menos 8 caracteres.";return}
@@ -181,12 +181,23 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
     const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
     recoveryAuth=client.auth;
     window.neonAuth=client.auth;
-    client.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
+    const resetParams=new URLSearchParams(location.search);
+    const hashParams=new URLSearchParams(location.hash.replace(/^#/,""));
+    const resetToken=resetParams.get("token")||hashParams.get("token");
+    const resetError=resetParams.get("error")||hashParams.get("error");
+    const isResetFlow=!!(resetToken||resetError);
+    client.auth.onAuthStateChange((_e,s)=>{
+      if(!isResetFlow)show(s?.user||null);
+    });
     const {data,error}=await client.auth.getSession();
     if(error)throw error;
-    const resetToken=new URLSearchParams(location.search).get("token");
-    if(resetToken)showRecovery(true);
-    else show(data.session?.user||null);
+    if(isResetFlow){
+      showRecovery(true);
+      if(resetError){
+        $("rerr").style.color="var(--red)";
+        $("rerr").textContent="El enlace de recuperación ha caducado o no es válido. Solicita uno nuevo.";
+      }
+    }else show(data.session?.user||null);
   }catch(e){
     console.error("No se pudo inicializar Neon:",e);
     $("login").hidden=false;$("home").hidden=true;
