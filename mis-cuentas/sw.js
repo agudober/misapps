@@ -1,4 +1,4 @@
-const V="cuentas-neon-v8-jwt-only";
+const V="cuentas-neon-v9-official-token-endpoint";
 const FILES=["./","index.html","neon-config.js","manifest.webmanifest","icons/apple-touch-icon.png","icons/icon-192.png","icons/icon-512.png"];
 self.addEventListener("install",e=>{
   e.waitUntil(caches.open(V).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting()));
