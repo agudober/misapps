@@ -1,11 +1,17 @@
-# Mis cuentas (Supabase)
+# Mis apps
 
-1. En Supabase → SQL Editor, ejecuta `supabase/schema.sql`.
-2. Authentication → Sign In / Providers → Email: desactiva "Allow new users to sign up".
-3. Authentication → Users → Add user (marca "Auto Confirm User") para ti y para tu pareja.
-4. Project Settings → API: copia la Project URL y la clave anon/publishable en `supabase-config.js`.
-5. Sube el contenido de esta carpeta a GitHub y activa Settings → Pages (rama main, carpeta /root).
-6. Si ya tenías el proyecto creado con el esquema anterior, ejecuta ademas `supabase/migracion-invitaciones.sql` (SQL Editor → Run, una sola vez). Añade invitaciones, correo interno y cuentas de solo lectura. Si empiezas de cero, `schema.sql` ya lo incluye.
+Portal de aplicaciones personales alojado en GitHub Pages.
 
+## Aplicaciones activas
+- **Mis cuentas:** `/mis-cuentas/`
+- **Mis horarios:** `/horarios/`
 
-Actualización visual: paleta verde billete como color principal y botón «Volver al inicio» en todas las pantallas, enlazado a la página principal situada en la carpeta superior. Se ha actualizado la versión de caché del Service Worker para aplicar los cambios.
+## Backend
+Las aplicaciones activas utilizan **Neon Auth** para iniciar sesión y **Neon Data API** para consultar y modificar PostgreSQL.
+
+La configuración pública del portal está en `config.js`; MisCuentas utiliza `mis-cuentas/neon-config.js`. No introducir claves secretas en archivos publicados.
+
+## Migración
+La rama `migracion-neon-mis-cuentas` contiene la migración a Neon. Mantener la rama `main` y el proyecto antiguo sin cambios hasta completar las pruebas funcionales de inicio de sesión, lectura y escritura en ambas aplicaciones.
+
+Los archivos y scripts con nombres `supabase` son respaldos/artefactos de la etapa anterior; no son la configuración usada por las aplicaciones activas.

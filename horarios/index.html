@@ -105,9 +105,9 @@ dialog .chk{display:flex;gap:8px;align-items:center;color:var(--tx);font-size:15
 </dialog>
 
 <script type="module">
-import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import {SUPABASE_URL,SUPABASE_KEY} from "../config.js";
-const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js";
+import {NEON_AUTH_URL,NEON_DATA_API_URL} from "../config.js";
+const sb=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 const H0=6,H1=23,pad=n=>String(n).padStart(2,'0'),$=id=>document.getElementById(id);

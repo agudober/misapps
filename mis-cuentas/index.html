@@ -204,8 +204,8 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 </dialog>
 
 <script type="module">
-import {createClient} from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
-import {SUPABASE_URL,SUPABASE_KEY} from "./supabase-config.js";
+import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js";
+import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -230,9 +230,9 @@ $("fecha").value=hoy();
 const MENU=`<button class="menubtn" aria-label="Menú" aria-haspopup="true">☰<span class="badge nbadge" hidden></span></button><div class="menulist" hidden><button data-a="logout">Cerrar sesión</button><button data-a="compartir">Compartir cuenta</button><button data-a="participante">Añadir participante</button><button data-a="correo">Correo interno<span class="badge nbadge" hidden></span></button></div>`;
 document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 
-const placeholder=String(SUPABASE_URL).startsWith("PEGA");
-const sb=placeholder?null:createClient(SUPABASE_URL,SUPABASE_KEY);
-let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,chan=null,timer=null;
+const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
+const sb=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
+let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
 const cat=id=>S.cats.find(c=>c.id===id)||{nombre:"Sin apartado",color:"#8a8f9c"};
 const owner=()=>S.cuenta&&S.cuenta.mi_rol==="propietario";
 const oops=e=>{$(page==="acc"?"appMsg":page==="mail"?"mailMsg":"listMsg").textContent=e.message||"Ha ocurrido un error."};
@@ -249,18 +249,18 @@ const view=v=>{$("mailView").hidden=v!=="mail";$("loginView").hidden=v!=="login"
 async function fetchAll(build){let out=[],from=0;for(;;){const{data,error}=await build().range(from,from+999);if(error)throw error;out=out.concat(data);if(data.length<1000)return out;from+=1000}}
 
 /* ---------- sesión ---------- */
-if(placeholder){view("login");$("loginErr").textContent="Falta pegar la configuración de Supabase en supabase-config.js."}
+if(placeholder){view("login");$("loginErr").textContent="Falta la configuración de Neon en neon-config.js."}
 else{
   const{data}=await sb.auth.getSession();setUser(data.session?.user||null);
   sb.auth.onAuthStateChange((_e,s)=>{const u=s?.user||null;if((u&&u.id)!==(user&&user.id))setTimeout(()=>setUser(u),0)});
 }
 function setUser(u){
-  user=u;if(chan){sb.removeChannel(chan);chan=null}
+  user=u;clearInterval(pollTimer);pollTimer=null;
   if(!u){cur=null;page="list";S.inv=[];document.querySelectorAll(".nbadge").forEach(b=>b.hidden=true);view("login");return}
   document.querySelectorAll(".who").forEach(e=>e.textContent=u.email);
-  chan=sb.channel("cambios");
-  ["cuentas","cuenta_miembros","apartados","movimientos","invitaciones"].forEach(t=>chan.on("postgres_changes",{event:"*",schema:"public",table:t},refresh));
-  chan.subscribe();loadInv();route();
+  loadInv();route();
+  // Neon Data API no ofrece la suscripción Realtime de Supabase: sincronizamos periódicamente.
+  pollTimer=setInterval(refresh,15000);
 }
 $("login").onclick=async()=>{
   if(!sb)return;
@@ -397,7 +397,7 @@ $("lista").onclick=async e=>{
   boton.disabled=true;
   const{data,error}=await sb.from("movimientos").delete().eq("id",id).eq("cuenta_id",cur).select("id");
   if(error){boton.disabled=false;return oops(error)}
-  if(!data?.length){boton.disabled=false;return alert("No se ha eliminado ningún movimiento. Comprueba que tienes permisos de editor/propietario y que la política RLS de Supabase está aplicada.")}
+  if(!data?.length){boton.disabled=false;return alert("No se ha eliminado ningún movimiento. Comprueba que tienes permisos de editor/propietario y que la política RLS de Neon está aplicada.")}
   await loadAccount();
 };
 $("cats").onclick=async e=>{const id=e.target.dataset.delcat;if(id&&confirm("¿Borrar el apartado? Sus movimientos quedarán “Sin apartado”.")){const{error}=await sb.from("apartados").delete().eq("id",id);error?oops(error):loadAccount()}};

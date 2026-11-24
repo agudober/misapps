@@ -1,29 +1,23 @@
-MIS APPS — REPOSITORIO ÚNICO (RECONSTRUCCIÓN)
+MIS APPS — REPOSITORIO ÚNICO
 
 ESTRUCTURA
 - index.html: inicio de Mis apps
 - mis-cuentas/: aplicación MisCuentas
 - horarios/: aplicación Mis horarios
-- apps.js, config.js, sw.js, manifest.webmanifest e icons/: archivos de Mis apps
-
-CREAR EL REPOSITORIO DESDE CERO
-1. En GitHub, crea un repositorio nuevo llamado exactamente: misapps
-2. Configúralo como público si quieres usar GitHub Pages gratis.
-3. Sube TODO el contenido de este ZIP a la raíz del repositorio. No subas la carpeta contenedora del ZIP: index.html debe quedar en la raíz.
-4. En Settings > Pages, elige Deploy from a branch, rama main y carpeta /(root). Guarda.
-5. Espera a que termine el despliegue.
+- apps.js, config.js, sw.js, manifest.webmanifest e icons/: archivos del portal
 
 DIRECCIONES
 - Inicio: https://agudober.github.io/misapps/
 - MisCuentas: https://agudober.github.io/misapps/mis-cuentas/
 - Mis horarios: https://agudober.github.io/misapps/horarios/
 
-BASE DE DATOS SUPABASE
-La base de datos existente NO se debe borrar ni recrear.
-No ejecutes de nuevo schema.sql ni migraciones si ya están aplicadas.
-Se conserva el archivo mis-cuentas/supabase-config.js del respaldo. Comprueba que contiene la URL y la clave pública (anon/publishable) del proyecto Supabase que sigue existiendo.
-No incluyas nunca una service_role/secret key en el HTML.
+BACKEND ACTUAL
+- Neon Auth: autenticación del portal y de las aplicaciones.
+- Neon Data API: acceso a las tablas PostgreSQL.
+- Configuración del portal y Mis horarios: config.js.
+- Configuración de MisCuentas: mis-cuentas/neon-config.js.
 
-IMPORTANTE
-Este paquete reconstruye el repositorio web; no crea, modifica ni elimina datos de Supabase.
-Antes de eliminar o archivar cualquier otro repositorio, comprueba que las tres direcciones funcionan.
+MIGRACIÓN
+La rama migracion-neon-mis-cuentas contiene los cambios de migración. No mezclar con main ni eliminar el proyecto antiguo hasta comprobar inicio de sesión, lectura y escritura de datos en las dos aplicaciones.
+
+Los archivos supabase-config.js y los SQL/directorios con nombre supabase se conservan como respaldo histórico. Las aplicaciones activas ya no los importan.
