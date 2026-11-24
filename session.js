@@ -3,8 +3,8 @@ const USER_KEY = "misapps-user-cache";
 
 export function saveNeonAuthResult(result) {
   const payload = result?.data ?? result;
-  const token = payload?.token || payload?.session?.token || payload?.session?.access_token || payload?.data?.token;
-  const user = payload?.user || payload?.session?.user || payload?.data?.user;
+  const token = payload?.token || payload?.session?.token || payload?.session?.access_token || payload?.data?.token || result?.token || result?.session?.token;
+  const user = payload?.user || payload?.session?.user || payload?.data?.user || result?.user || result?.session?.user;
   if (!token || !user?.id) {
     throw new Error("Neon ha validado el acceso, pero no ha entregado el token de sesión necesario para mantenerlo en este iPhone.");
   }
