@@ -75,7 +75,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </main>
 
 <script type="module">
-import {NEON_AUTH_URL} from "./config.js";
+import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -116,7 +116,7 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
 (async()=>{
   try{
     const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()}});
+    const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
     window.neonAuth=client.auth;
     client.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
     const {data,error}=await client.auth.getSession();
