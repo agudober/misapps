@@ -121,8 +121,21 @@ $("lbtn").onclick=async()=>{
   if(!email||!password){$("lerr").textContent="Escribe tu correo y tu contraseña.";return}
   $("lbtn").disabled=true;$("lbtn").textContent="Entrando…";
   try{
-    const {error}=await window.neonAuth.signInWithPassword({email,password});
-    if(error)$("lerr").textContent="Neon Auth: "+(error.message||"No se pudo iniciar sesión.");
+    const {data,error}=await window.neonAuth.signInWithPassword({email,password});
+    if(error)throw error;
+    let signedUser=data?.user||data?.session?.user||null;
+    if(!signedUser){
+      const sessionResult=await window.neonAuth.getSession();
+      if(sessionResult?.error)throw sessionResult.error;
+      signedUser=sessionResult?.data?.user||sessionResult?.data?.session?.user||null;
+    }
+    if(signedUser){
+      $("recovery").hidden=true;
+      show(signedUser);
+      $("pw").value="";
+    }else{
+      $("lerr").textContent="La contraseña parece correcta, pero Neon no ha devuelto una sesión. Recarga la página y vuelve a intentarlo.";
+    }
   }catch(e){console.error(e);$("lerr").textContent="Error de acceso: "+(e?.message||String(e))}
   finally{$("lbtn").disabled=false;$("lbtn").textContent="Entrar"}
 };
