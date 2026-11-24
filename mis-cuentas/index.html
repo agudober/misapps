@@ -204,8 +204,9 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 </dialog>
 
 <script type="module">
-import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
+import {createClient} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken} from "../session.js?v=1";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -231,7 +232,9 @@ const MENU=`<button class="menubtn" aria-label="Menú" aria-haspopup="true">☰<
 document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
-const sb=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
+const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL}});
+const dataClient=placeholder?null:createClient({dataApi:{url:NEON_DATA_API_URL,getToken:getNeonToken}});
+const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>dataClient.from(...args),rpc:(...args)=>dataClient.rpc(...args)};
 let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
 const cat=id=>S.cats.find(c=>c.id===id)||{nombre:"Sin apartado",color:"#8a8f9c"};
 const owner=()=>S.cuenta&&S.cuenta.mi_rol==="propietario";
@@ -251,8 +254,7 @@ async function fetchAll(build){let out=[],from=0;for(;;){const{data,error}=await
 /* ---------- sesión ---------- */
 if(placeholder){view("login");$("loginErr").textContent="Falta la configuración de Neon en neon-config.js."}
 else{
-  const{data}=await sb.auth.getSession();setUser(data.session?.user||null);
-  sb.auth.onAuthStateChange((_e,s)=>{const u=s?.user||null;if((u&&u.id)!==(user&&user.id))setTimeout(()=>setUser(u),0)});
+  setUser(readNeonUser());
 }
 function setUser(u){
   user=u;clearInterval(pollTimer);pollTimer=null;
@@ -268,9 +270,11 @@ $("login").onclick=async()=>{
   if(btn.disabled)return;
   btn.disabled=true;btn.textContent="Entrando…";$("loginErr").textContent="";
   try{
-    const{error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("pass").value});
-    if(error)$("loginErr").textContent=/invalid/i.test(error.message)?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión: "+error.message;
-  }catch(err){$("loginErr").textContent="No se pudo iniciar sesión: "+(err.message||"Comprueba tu conexión.")}
+    const result=await sb.auth.signIn.email({email:$("email").value.trim(),password:$("pass").value});
+    if(result?.error)throw result.error;
+    const signedUser=saveNeonAuthResult(result);
+    setUser(signedUser);
+  }catch(err){$("loginErr").textContent=/invalid|credential/i.test(err.message||"")?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión: "+(err.message||"Comprueba tu conexión.")}
   finally{btn.disabled=false;btn.textContent="Entrar"}
 };
 $("pass").onkeydown=e=>{if(e.key==="Enter")$("login").click()};
@@ -281,7 +285,7 @@ document.addEventListener("click",e=>{
   const a=e.target.closest("[data-a]");if(a)accion(a.dataset.a);
 });
 function accion(a){
-  if(a==="logout"){location.hash="";sb.auth.signOut()}
+  if(a==="logout"){location.hash="";sb.auth.signOut().catch(()=>{}).finally(()=>{clearNeonAuth();setUser(null)})}
   else if(a==="correo")location.hash="correo";
   else openShare(a==="compartir"?"lector":"editor");
 }
