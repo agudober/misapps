@@ -232,7 +232,7 @@ const MENU=`<button class="menubtn" aria-label="Menú" aria-haspopup="true">☰<
 document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
-const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL}});
+const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
 const dataClient=placeholder?null:createClient({dataApi:{url:NEON_DATA_API_URL,getToken:getNeonToken}});
 const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>dataClient.from(...args),rpc:(...args)=>dataClient.rpc(...args)};
 let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
