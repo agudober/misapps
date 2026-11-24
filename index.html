@@ -143,8 +143,8 @@ $("sendReset").onclick=async()=>{
   if(!recoveryAuth){$("rerr").textContent="El servicio de recuperación aún no está listo. Recarga la página.";return}
   $("sendReset").disabled=true;$("sendReset").textContent="Enviando…";$("rerr").textContent="";
   try{
-    const result=await recoveryAuth.requestPasswordReset({email,redirectTo:location.origin+location.pathname});
-    if(result?.error)throw result.error;
+    const {error}=await recoveryAuth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+    if(error)throw error;
     $("rerr").style.color="var(--ac)";
     $("rerr").textContent="Solicitud enviada. Revisa el correo y también la carpeta de spam.";
   }catch(e){console.error(e);$("rerr").style.color="var(--red)";$("rerr").textContent="Neon Auth: "+(e?.message||String(e))}
@@ -158,8 +158,9 @@ $("savePassword").onclick=async()=>{
   if(password!==confirm){$("rerr").textContent="Las contraseñas no coinciden.";return}
   $("savePassword").disabled=true;$("savePassword").textContent="Guardando…";$("rerr").textContent="";
   try{
-    const result=await recoveryAuth.resetPassword({newPassword:password,token});
-    if(result?.error)throw result.error;
+    const response=await fetch(NEON_AUTH_URL+"/reset-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({newPassword:password,token})});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||result?.error)throw new Error(result?.message||result?.error?.message||"No se pudo actualizar la contraseña.");
     $("rerr").style.color="var(--ac)";$("rerr").textContent="Contraseña actualizada. Ya puedes iniciar sesión.";
     $("newPassword").value="";$("confirmPassword").value="";
     setTimeout(()=>{$("backLogin").click()},1800);
@@ -178,7 +179,7 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
   try{
     const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
     const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
-    recoveryAuth=createClient({auth:{url:NEON_AUTH_URL}}).auth;
+    recoveryAuth=client.auth;
     window.neonAuth=client.auth;
     client.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
     const {data,error}=await client.auth.getSession();
