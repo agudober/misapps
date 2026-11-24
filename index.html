@@ -99,7 +99,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth} from "./session.js?v=3";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt} from "./session.js?v=4";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function show(user){
@@ -186,8 +186,9 @@ document.addEventListener("click",e=>{
 $("out").onclick=async()=>{try{await window.neonAuth?.signOut()}catch(e){console.warn("Cierre de sesión remoto",e)}finally{clearNeonAuth();show(null)}};
 (async()=>{
   try{
-    const {createClient}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const client=createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
+    const {createClient,BetterAuthVanillaAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
+    const adapter=BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
+    const client=createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
     recoveryAuth=client.auth;
     window.neonAuth=client.auth;
     const resetParams=new URLSearchParams(location.search);
