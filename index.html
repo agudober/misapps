@@ -187,7 +187,7 @@ $("out").onclick=async()=>{try{await window.neonAuth?.signOut()}catch(e){console
 (async()=>{
   try{
     const {createClient}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const client=createClient({auth:{url:NEON_AUTH_URL}});
+    const client=createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
     recoveryAuth=client.auth;
     window.neonAuth=client.auth;
     const resetParams=new URLSearchParams(location.search);
