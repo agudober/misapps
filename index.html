@@ -121,9 +121,9 @@ $("lbtn").onclick=async()=>{
   if(!email||!password){$("lerr").textContent="Escribe tu correo y tu contraseña.";return}
   $("lbtn").disabled=true;$("lbtn").textContent="Entrando…";
   try{
-    const {data,error}=await window.neonAuth.signInWithPassword({email,password});
-    if(error)throw error;
-    let signedUser=data?.user||data?.session?.user||null;
+    const result=await window.neonAuth.signIn.email({email,password});
+    if(result?.error)throw result.error;
+    let signedUser=result?.data?.user||null;
     if(!signedUser){
       const sessionResult=await window.neonAuth.getSession();
       if(sessionResult?.error)throw sessionResult.error;
@@ -156,8 +156,8 @@ $("sendReset").onclick=async()=>{
   if(!recoveryAuth){$("rerr").textContent="El servicio de recuperación aún no está listo. Recarga la página.";return}
   $("sendReset").disabled=true;$("sendReset").textContent="Enviando…";$("rerr").textContent="";
   try{
-    const {error}=await recoveryAuth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
-    if(error)throw error;
+    const result=await recoveryAuth.requestPasswordReset({email,redirectTo:location.origin+location.pathname});
+    if(result?.error)throw result.error;
     $("rerr").style.color="var(--ac)";
     $("rerr").textContent="Solicitud enviada. Revisa el correo y también la carpeta de spam.";
   }catch(e){console.error(e);$("rerr").style.color="var(--red)";$("rerr").textContent="Neon Auth: "+(e?.message||String(e))}
@@ -190,8 +190,8 @@ document.addEventListener("click",e=>{
 $("out").onclick=async()=>{await window.neonAuth?.signOut()};
 (async()=>{
   try{
-    const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
+    const {createClient}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
+    const client=createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
     recoveryAuth=client.auth;
     window.neonAuth=client.auth;
     const resetParams=new URLSearchParams(location.search);
