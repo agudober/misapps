@@ -47,7 +47,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 </style>
 </head>
 <body>
-<section id="login" hidden>
+<section id="login">
   <img class="logo" src="icons/icon-192.png" alt="">
   <h1 style="font-size:1.5rem">Mis apps</h1>
   <p class="sub" style="margin-bottom:14px">Entra para ver tus aplicaciones.</p>
@@ -75,13 +75,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 </main>
 
 <script type="module">
-import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js";
 import {NEON_AUTH_URL} from "./config.js";
-import {APPS} from "./apps.js?v=3";
+import {APPS} from "./apps.js?v=4";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const sb=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()}});
-
 function show(user){
   $("login").hidden=!!user;$("home").hidden=!user;
   if(!user)return;
@@ -95,46 +92,42 @@ function show(user){
     return `<a class="app" href="${esc(a.ruta)}">${inner}</a>`;
   }).join("");
 }
-sb.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
-sb.auth.getSession().then(({data})=>show(data.session?.user||null));
-
-async function entrar(){
-  const email=$("em").value.trim();
-  const password=$("pw").value;
+$("lbtn").onclick=async()=>{
+  if(!window.neonAuth){$("lerr").textContent="El servicio de acceso aún no se ha inicializado. Recarga la página.";return}
+  const email=$("em").value.trim(),password=$("pw").value;
   $("lerr").textContent="";
   if(!email||!password){$("lerr").textContent="Escribe tu correo y tu contraseña.";return}
-  $("lbtn").disabled=true;
-  $("lbtn").textContent="Entrando…";
+  $("lbtn").disabled=true;$("lbtn").textContent="Entrando…";
   try{
-    const{error}=await sb.auth.signInWithPassword({email,password});
-    if(error){
-      const msg=String(error.message||"");
-      $("lerr").textContent=/invalid|credential|password/i.test(msg)
-        ?"No se reconoce esa contraseña. Las contraseñas de Supabase no se pueden trasladar a Neon: necesitas establecer una contraseña nueva para esta cuenta."
-        :"Neon Auth: "+msg;
-    }
-  }catch(error){
-    console.error("Error de inicio de sesión en Neon Auth:",error);
-    $("lerr").textContent="No se pudo conectar con Neon Auth: "+(error?.message||"error de red o configuración");
-  }finally{
-    $("lbtn").disabled=false;
-    $("lbtn").textContent="Entrar";
-  }
-}
-$("lbtn").onclick=entrar;
-$("pw").onkeydown=e=>{if(e.key==="Enter")entrar()};
+    const {error}=await window.neonAuth.signInWithPassword({email,password});
+    if(error)$("lerr").textContent="Neon Auth: "+(error.message||"No se pudo iniciar sesión.");
+  }catch(e){console.error(e);$("lerr").textContent="Error de acceso: "+(e?.message||String(e))}
+  finally{$("lbtn").disabled=false;$("lbtn").textContent="Entrar"}
+};
+$("pw").onkeydown=e=>{if(e.key==="Enter")$("lbtn").click()};
 $("profileBtn").onclick=()=>{
-  const open=$("profileMenu").hidden;
-  $("profileMenu").hidden=!open;
+  const open=$("profileMenu").hidden;$("profileMenu").hidden=!open;
   $("profileBtn").setAttribute("aria-expanded",String(open));
 };
 document.addEventListener("click",e=>{
-  if(!e.target.closest(".profile-wrap")){
-    $("profileMenu").hidden=true;
-    $("profileBtn").setAttribute("aria-expanded","false");
-  }
+  if(!e.target.closest(".profile-wrap")){$("profileMenu").hidden=true;$("profileBtn").setAttribute("aria-expanded","false")}
 });
-$("out").onclick=async()=>{await sb.auth.signOut()};
+$("out").onclick=async()=>{await window.neonAuth?.signOut()};
+(async()=>{
+  try{
+    const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
+    const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()}});
+    window.neonAuth=client.auth;
+    client.auth.onAuthStateChange((_e,s)=>show(s?.user||null));
+    const {data,error}=await client.auth.getSession();
+    if(error)throw error;
+    show(data.session?.user||null);
+  }catch(e){
+    console.error("No se pudo inicializar Neon:",e);
+    $("login").hidden=false;$("home").hidden=true;
+    $("lerr").textContent="No se pudo cargar el acceso de Neon: "+(e?.message||String(e))+". Comprueba la conexión y recarga.";
+  }
+})();
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
 </body>
