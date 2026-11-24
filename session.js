@@ -44,3 +44,5 @@ export async function getNeonToken() {
   const token = localStorage.getItem(NEON_TOKEN_KEY);
   return isJwt(token) ? token : null;
 }
+
+// La autenticación PWA obtiene el JWT de la cabecera set-auth-jwt del SDK de Neon.
