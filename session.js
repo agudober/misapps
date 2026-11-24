@@ -6,31 +6,19 @@ function isJwt(value) {
     value.split(".").every(part => part.length > 0);
 }
 
+export function captureNeonJwt(ctx) {
+  // Neon Auth entrega el JWT en esta cabecera, no en el JSON del sign-in.
+  const token = ctx?.response?.headers?.get("set-auth-jwt");
+  if (isJwt(token)) localStorage.setItem(NEON_TOKEN_KEY, token);
+}
+
 export function saveNeonAuthResult(result) {
   const payload = result?.data ?? result;
-  const session = payload?.session || payload?.data?.session || result?.session;
-  // Neon injects its Data API JWT into Better Auth's session.token field
-  // through the "set-auth-jwt" response header. It is NOT session.access_token.
-  const candidates = [
-    session?.token,
-    payload?.session?.token,
-    payload?.data?.session?.token,
-    result?.session?.token,
-    session?.access_token,
-    payload?.session?.access_token,
-    payload?.data?.session?.access_token,
-    result?.session?.access_token,
-    payload?.token,
-    result?.token,
-    payload?.access_token,
-    result?.access_token
-  ];
-  const token = candidates.find(isJwt);
-  const user = payload?.user || session?.user || payload?.data?.user || result?.user || result?.session?.user;
-  if (!token || !user?.id) {
-    throw new Error("Neon ha validado el acceso, pero no ha entregado el JWT de sesión en la respuesta. No se ha modificado ni borrado ningún dato.");
+  const user = payload?.user || payload?.data?.user || result?.user;
+  const token = localStorage.getItem(NEON_TOKEN_KEY);
+  if (!isJwt(token) || !user?.id) {
+    throw new Error("Neon no ha entregado el JWT en la cabecera de autenticación. No se ha modificado ni borrado ningún dato.");
   }
-  localStorage.setItem(NEON_TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   return user;
 }
