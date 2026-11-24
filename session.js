@@ -9,20 +9,26 @@ function isJwt(value) {
 export function saveNeonAuthResult(result) {
   const payload = result?.data ?? result;
   const session = payload?.session || payload?.data?.session || result?.session;
-  // Better Auth's session.token is an opaque cookie identifier, NOT a JWT.
-  // The Data API requires session.access_token.
+  // Neon injects its Data API JWT into Better Auth's session.token field
+  // through the "set-auth-jwt" response header. It is NOT session.access_token.
   const candidates = [
+    session?.token,
+    payload?.session?.token,
+    payload?.data?.session?.token,
+    result?.session?.token,
     session?.access_token,
     payload?.session?.access_token,
     payload?.data?.session?.access_token,
     result?.session?.access_token,
+    payload?.token,
+    result?.token,
     payload?.access_token,
     result?.access_token
   ];
   const token = candidates.find(isJwt);
   const user = payload?.user || session?.user || payload?.data?.user || result?.user || result?.session?.user;
   if (!token || !user?.id) {
-    throw new Error("Neon no ha devuelto un JWT válido para acceder a tus datos. No se ha modificado ni borrado ningún dato.");
+    throw new Error("Neon ha validado el acceso, pero no ha entregado el JWT de sesión en la respuesta. No se ha modificado ni borrado ningún dato.");
   }
   localStorage.setItem(NEON_TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
