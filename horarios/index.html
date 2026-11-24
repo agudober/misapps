@@ -48,6 +48,12 @@ main{padding:12px 12px calc(84px + env(safe-area-inset-bottom));max-width:1100px
 .wk{display:grid;grid-template-columns:38px repeat(7,minmax(104px,1fr));min-width:780px;background:var(--sf);border:1px solid var(--bd);border-radius:12px}
 .wk .h{padding:6px 2px;text-align:center;font-size:12px;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--sf);z-index:3}
 .wk .h.sel{background:var(--ac2);color:#fff}
+.wk .h.past{background:color-mix(in srgb,var(--red) 8%,var(--sf))}
+.day-ended{display:inline-flex;align-items:center;gap:3px;margin-top:4px;padding:2px 6px;border:1px solid var(--red);border-radius:999px;background:color-mix(in srgb,var(--red) 12%,var(--sf));color:var(--red);font-size:10px;font-weight:800;line-height:1.2;cursor:pointer}
+.day-ended .x{font-size:14px;line-height:1}
+.col.past{background:repeating-linear-gradient(135deg,transparent,transparent 9px,color-mix(in srgb,var(--red) 4%,transparent) 9px,color-mix(in srgb,var(--red) 4%,transparent) 18px)}
+.past-summary{background:color-mix(in srgb,var(--red) 8%,var(--sf));border:1px solid color-mix(in srgb,var(--red) 40%,var(--bd));border-left:5px solid var(--red);border-radius:12px;padding:9px 12px;margin:0 0 10px;font-size:13px}
+.past-summary b{color:var(--red)}
 .hrs{position:sticky;left:0;background:var(--sf);z-index:4}
 .hrs div{height:48px;font-size:10px;color:var(--mu);text-align:right;padding:2px 4px 0 0;border-top:1px solid var(--bd)}
 .col{position:relative;border-left:1px solid var(--bd)}
@@ -162,10 +168,10 @@ function renderCal(){
 function renderSem(){
   const ws=mon(pd(selDay)),we=addD(ws,6),today=ymd(new Date());
   let h=`<div class="bar"><button class="btn" id="pw">‹</button><h2>${ws.getDate()} ${MESES[ws.getMonth()]} – ${we.getDate()} ${MESES[we.getMonth()]}</h2><button class="btn" id="hs">Hoy</button><button class="btn" id="nw">›</button></div><div class="wrap" id="wrap"><div class="wk"><div class="h hrs" style="top:0"></div>`;
-  for(let i=0;i<7;i++){const d=addD(ws,i),k=ymd(d);h+=`<div class="h${k===selDay?' sel':''}"><b>${DIAS[i]} ${d.getDate()}</b></div>`}
+  for(let i=0;i<7;i++){const d=addD(ws,i),k=ymd(d),past=k<today;h+=`<div class="h${k===selDay?' sel':''}${past?' past':''}"><b>${DIAS[i]} ${d.getDate()}</b>${past?`<button type="button" class="day-ended" data-past-day="${k}" title="Ver lo que pasó este día" aria-label="Ver el día finalizado ${DIAS[i]} ${d.getDate()}"><span class="x">✕</span> FINALIZADO</button>`:''}</div>`}
   h+='<div class="hrs">';for(let x=H0;x<H1;x++)h+=`<div>${pad(x)}</div>`;h+='</div>';
   for(let i=0;i<7;i++){
-    const k=ymd(addD(ws,i));h+=`<div class="col${k===selDay?' sel':''}" data-d="${k}" id="c${i}">`;
+    const k=ymd(addD(ws,i)),past=k<today;h+=`<div class="col${k===selDay?' sel':''}${past?' past':''}" data-d="${k}" id="c${i}">`;
     for(let x=H0;x<H1;x++)h+=`<div class="slot" data-h="${x}"></div>`;
     occ(k).forEach(e=>{
       const a=Math.max(tmin(e.start_time),H0*60),b=Math.min(tmin(e.end_time),H1*60);if(b<=a)return;
@@ -173,10 +179,14 @@ function renderSem(){
     });
     h+='</div>';
   }
-  $('sem').innerHTML=h+'</div></div>'+legend();
+  const selectedIsPast=selDay<today;
+  const selectedEvents=occ(selDay);
+  const pastInfo=selectedIsPast?`<div class="past-summary"><b>✕ DÍA FINALIZADO</b> · ${selectedEvents.length} ${selectedEvents.length===1?'actividad':'actividades'} registradas. Pulsa sobre una actividad del horario para consultar sus detalles.</div>`:'';
+  $('sem').innerHTML=pastInfo+h+'</div></div>'+legend();
+  document.querySelectorAll('[data-past-day]').forEach(btn=>btn.onclick=()=>{selDay=btn.dataset.pastDay;renderSem()});
   const mv=n=>{selDay=ymd(addD(pd(selDay),n));renderSem()};
   $('pw').onclick=()=>mv(-7);$('nw').onclick=()=>mv(7);$('hs').onclick=()=>{selDay=today;renderSem()};
-  document.querySelectorAll('.slot').forEach(el=>el.onclick=()=>{const x=+el.dataset.h;openEv({date:el.parentNode.dataset.d,start_time:pad(x)+':00',end_time:x<23?pad(x+1)+':00':'23:59',shares:[]})});
+  document.querySelectorAll('.slot').forEach(el=>el.onclick=()=>{const day=el.parentNode.dataset.d;if(day<today)return;const x=+el.dataset.h;openEv({date:day,start_time:pad(x)+':00',end_time:x<23?pad(x+1)+':00':'23:59',shares:[]})});
   document.querySelectorAll('.ev').forEach(el=>el.onclick=ev=>{ev.stopPropagation();openEv(events.find(e=>e.id===el.dataset.id))});
   const sc=$('wrap'),i=(dow(selDay)-1);sc.scrollLeft=Math.max(0,$('c'+i).offsetLeft-38-8);
   sc.scrollTop=0;
