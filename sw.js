@@ -1,6 +1,6 @@
 // Service worker de la pantalla principal. No borra las cachés de las apps hijas.
-const V = "madre-v15-shared-neon-session";
-const FILES = ["./", "index.html", "apps.js", "config.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
+const V = "madre-v16-pwa-token-session";
+const FILES = ["./", "index.html", "apps.js", "config.js", "session.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 const scope = new URL("./", self.location).pathname;
 const own = p => p === scope || FILES.some(f => f !== "./" && p === scope + f);
 self.addEventListener("install", e => e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
