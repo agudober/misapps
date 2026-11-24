@@ -7,8 +7,9 @@ function isJwt(value) {
 }
 
 export function captureNeonJwt(ctx) {
-  // Neon Auth entrega el JWT en esta cabecera, no en el JSON del sign-in.
-  const token = ctx?.response?.headers?.get("set-auth-jwt");
+  // NeonAuthAdapterCore lee "set-auth-jwt" y lo inyecta en
+  // ctx.data.session.token antes de ejecutar el onSuccess del usuario.
+  const token = ctx?.data?.session?.token;
   if (isJwt(token)) localStorage.setItem(NEON_TOKEN_KEY, token);
 }
 
