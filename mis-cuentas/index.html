@@ -204,7 +204,7 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 </dialog>
 
 <script type="module">
-import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js";
+import {createClient, SupabaseAuthAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
@@ -231,7 +231,7 @@ const MENU=`<button class="menubtn" aria-label="Menú" aria-haspopup="true">☰<
 document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
-const sb=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
+const sb=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter},dataApi:{url:NEON_DATA_API_URL}});
 let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
 const cat=id=>S.cats.find(c=>c.id===id)||{nombre:"Sin apartado",color:"#8a8f9c"};
 const owner=()=>S.cuenta&&S.cuenta.mi_rol==="propietario";
