@@ -111,10 +111,11 @@ dialog .chk{display:flex;gap:8px;align-items:center;color:var(--tx);font-size:15
 </dialog>
 
 <script type="module">
-import {createClient} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
+import {createClient,BetterAuthVanillaAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "../config.js";
-import {readNeonUser,clearNeonAuth,getNeonToken} from "../session.js?v=3";
-const authClient=createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
+import {readNeonUser,clearNeonAuth,getNeonToken,captureNeonJwt} from "../session.js?v=4";
+const adapter=BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
+const authClient=createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
 const dataClient=createClient({dataApi:{url:NEON_DATA_API_URL,getToken:getNeonToken}});
 const sb={auth:authClient.auth,from:(...args)=>dataClient.from(...args)};
 const MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
