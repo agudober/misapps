@@ -1,5 +1,5 @@
 // Service worker de la pantalla principal. No borra las cachés de las apps hijas.
-const V = "madre-v18-auth-jwt-context";
+const V = "madre-v19-token-shape";
 const FILES = ["./", "index.html", "apps.js", "config.js", "session.js", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 const scope = new URL("./", self.location).pathname;
 const own = p => p === scope || FILES.some(f => f !== "./" && p === scope + f);
