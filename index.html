@@ -99,6 +99,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth} from "./session.js?v=1";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function show(user){
@@ -121,9 +122,9 @@ $("lbtn").onclick=async()=>{
   if(!email||!password){$("lerr").textContent="Escribe tu correo y tu contraseña.";return}
   $("lbtn").disabled=true;$("lbtn").textContent="Entrando…";
   try{
-    const {data,error}=await window.neonAuth.signInWithPassword({email,password});
-    if(error)throw error;
-    const signedUser=data?.user||data?.session?.user||null;
+    const result=await window.neonAuth.signIn.email({email,password});
+    if(result?.error)throw result.error;
+    const signedUser=saveNeonAuthResult(result);
     if(signedUser){
       $("recovery").hidden=true;
       show(signedUser);
@@ -182,29 +183,25 @@ $("profileBtn").onclick=()=>{
 document.addEventListener("click",e=>{
   if(!e.target.closest(".profile-wrap")){$("profileMenu").hidden=true;$("profileBtn").setAttribute("aria-expanded","false")}
 });
-$("out").onclick=async()=>{await window.neonAuth?.signOut()};
+$("out").onclick=async()=>{try{await window.neonAuth?.signOut()}catch(e){console.warn("Cierre de sesión remoto",e)}finally{clearNeonAuth();show(null)}};
 (async()=>{
   try{
-    const {createClient,SupabaseAuthAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const client=createClient({auth:{url:NEON_AUTH_URL,adapter:SupabaseAuthAdapter()},dataApi:{url:NEON_DATA_API_URL}});
-    const recoveryClient=createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
-    recoveryAuth=recoveryClient.auth;
+    const {createClient}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
+    const client=createClient({auth:{url:NEON_AUTH_URL}});
+    recoveryAuth=client.auth;
     window.neonAuth=client.auth;
     const resetParams=new URLSearchParams(location.search);
     const hashParams=new URLSearchParams(location.hash.replace(/^#/,""));
     const resetToken=resetParams.get("token")||hashParams.get("token");
     const resetError=resetParams.get("error")||hashParams.get("error");
     const isResetFlow=!!(resetToken||resetError);
-    const {data,error}=await client.auth.getSession();
-    if(error)throw error;
     if(isResetFlow){
       showRecovery(true);
       if(resetError){
         $("rerr").style.color="var(--red)";
         $("rerr").textContent="El enlace de recuperación ha caducado o no es válido. Solicita uno nuevo.";
       }
-    }else show(data.session?.user||null);
-    client.auth.onAuthStateChange((_event,session)=>show(session?.user||null));
+    }else show(readNeonUser());
   }catch(e){
     console.error("No se pudo inicializar Neon:",e);
     $("login").hidden=false;$("home").hidden=true;
