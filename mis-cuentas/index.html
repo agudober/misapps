@@ -204,9 +204,9 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 </dialog>
 
 <script type="module">
-import {createClient} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
+import {createClient,BetterAuthVanillaAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken} from "../session.js?v=3";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken,captureNeonJwt} from "../session.js?v=4";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -232,7 +232,8 @@ const MENU=`<button class="menubtn" aria-label="Menú" aria-haspopup="true">☰<
 document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
-const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL},dataApi:{url:NEON_DATA_API_URL}});
+const adapter=placeholder?null:BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
+const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
 const dataClient=placeholder?null:createClient({dataApi:{url:NEON_DATA_API_URL,getToken:getNeonToken}});
 const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>dataClient.from(...args),rpc:(...args)=>dataClient.rpc(...args)};
 let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
