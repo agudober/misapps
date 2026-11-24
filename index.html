@@ -99,7 +99,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth} from "./session.js?v=2";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth} from "./session.js?v=3";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function show(user){
