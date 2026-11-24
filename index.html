@@ -214,7 +214,7 @@ $("out").onclick=async()=>{await window.neonAuth?.signOut()};
     $("lerr").textContent="No se pudo cargar el acceso de Neon: "+(e?.message||String(e))+". Comprueba la conexión y recarga.";
   }
 })();
-if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>r.update()).catch(()=>{}));
 </script>
 </body>
 </html>
