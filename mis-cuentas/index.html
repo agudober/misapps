@@ -397,7 +397,7 @@ $("lista").onclick=async e=>{
   boton.disabled=true;
   const{data,error}=await sb.from("movimientos").delete().eq("id",id).eq("cuenta_id",cur).select("id");
   if(error){boton.disabled=false;return oops(error)}
-  if(!data?.length){boton.disabled=false;return alert("No se ha eliminado ningún movimiento. Comprueba que tienes permisos de editor/propietario y que la política RLS de Supabase está aplicada.")}
+  if(!data?.length){boton.disabled=false;return alert("No se ha eliminado ningún movimiento. Comprueba que tienes permisos de editor/propietario y que la política RLS de Neon está aplicada.")}
   await loadAccount();
 };
 $("cats").onclick=async e=>{const id=e.target.dataset.delcat;if(id&&confirm("¿Borrar el apartado? Sus movimientos quedarán “Sin apartado”.")){const{error}=await sb.from("apartados").delete().eq("id",id);error?oops(error):loadAccount()}};
