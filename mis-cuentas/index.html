@@ -206,7 +206,7 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 <script type="module">
 import {createClient,BetterAuthVanillaAdapter} from "https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle";
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,getNeonToken,captureNeonJwt} from "../session.js?v=8";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt} from "../session.js?v=9";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -234,8 +234,8 @@ document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
 const adapter=placeholder?null:BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
 const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
-const dataClient=placeholder?null:createClient({dataApi:{url:NEON_DATA_API_URL,getToken:getNeonToken}});
-const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>dataClient.from(...args),rpc:(...args)=>dataClient.rpc(...args)};
+
+const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>authClient.from(...args),rpc:(...args)=>authClient.rpc(...args)};
 let S={lista:[],cuenta:null,cats:[],tx:[],miembros:[],mm:{},inv:[]},page="list",cur=null,tipo="gasto",user=null,timer=null,pollTimer=null;
 const cat=id=>S.cats.find(c=>c.id===id)||{nombre:"Sin apartado",color:"#8a8f9c"};
 const owner=()=>S.cuenta&&S.cuenta.mi_rol==="propietario";
@@ -273,7 +273,7 @@ $("login").onclick=async()=>{
   try{
     const result=await sb.auth.signIn.email({email:$("email").value.trim(),password:$("pass").value});
     if(result?.error)throw result.error;
-    const signedUser=saveNeonAuthResult(result,sb.auth);
+    const signedUser=await saveNeonAuthResult(result);
     setUser(signedUser);
   }catch(err){$("loginErr").textContent=/invalid|credential/i.test(err.message||"")?"Correo o contraseña incorrectos.":"No se pudo iniciar sesión: "+(err.message||"Comprueba tu conexión.")}
   finally{btn.disabled=false;btn.textContent="Entrar"}
