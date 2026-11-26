@@ -99,7 +99,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback} from "./session.js?v=13";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback,createPwaCompatibleAdapter} from "./session.js?v=14";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function show(user){
@@ -188,7 +188,7 @@ $("out").onclick=async()=>{try{await window.neonAuth?.signOut()}catch(e){console
   try{
     installPwaAuthFallback(NEON_AUTH_URL);
     const {createClient,BetterAuthVanillaAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-    const adapter=BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
+    const adapter=createPwaCompatibleAdapter(BetterAuthVanillaAdapter,{fetchOptions:{onSuccess:captureNeonJwt}});
     const client=createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
     recoveryAuth=client.auth;
     window.neonAuth=client.auth;
