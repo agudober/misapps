@@ -139,12 +139,23 @@ const occ=k=>events.filter(e=>e.date===k||(e.repeat_dow&&e.repeat_dow===dow(k)&&
   .sort((a,b)=>(b.urgent-a.urgent)||a.start_time.localeCompare(b.start_time));
 
 async function load(){
-  const [p,t,e,m]=await Promise.all([
-    sb.from('profiles').select('id,name'),sb.from('activity_types').select('*').order('name'),
-    sb.from('events').select('*, event_shares(user_id)'),sb.from('messages').select('*').order('created_at',{ascending:false})]);
-  profiles=p.data||[];types=t.data||[];msgs=m.data||[];
-  events=(e.data||[]).map(x=>({...x,start_time:x.start_time.slice(0,5),end_time:x.end_time.slice(0,5),shares:(x.event_shares||[]).map(s=>s.user_id)}));
-  render();
+  try{
+    const [p,t,e,m]=await Promise.all([
+      sb.from('profiles').select('id,name'),sb.from('activity_types').select('*').order('name'),
+      sb.from('events').select('*, event_shares(user_id)'),sb.from('messages').select('*').order('created_at',{ascending:false})]);
+    for(const [name,result] of [['perfiles',p],['actividades',t],['quehaceres',e],['buzón',m]]){
+      if(result.error)throw new Error('No se pudieron cargar '+name+': '+result.error.message);
+    }
+    profiles=p.data||[];types=t.data||[];msgs=m.data||[];
+    events=(e.data||[]).map(x=>({...x,start_time:(x.start_time||'').slice(0,5),end_time:(x.end_time||'').slice(0,5),shares:(x.event_shares||[]).map(s=>s.user_id)}));
+    render();
+  }catch(error){
+    console.error('Error al sincronizar Horarios con Neon:',error);
+    const message=esc(error?.message||'Error desconocido');
+    const panel='<div class="today"><b>No se han podido sincronizar tus datos</b><div>'+message+'</div><button class="btn pri" id="retryLoad" style="margin-top:10px">Reintentar</button></div>';
+    $('cal').innerHTML=panel;$('sem').innerHTML=panel;$('act').innerHTML=panel;$('buz').innerHTML=panel;
+    $('retryLoad').onclick=load;
+  }
 }
 const mark=e=>(e.urgent?'❗':'')+((e.shares.length||e.owner_id!==me.id)?'🤝':'')+(e.repeat_dow?'🔁':'');
 const legend=()=>'<div class="leg">'+myTypes().map(t=>`<span><i class="dot" style="background:${t.color}"></i> ${esc(t.name)}</span>`).join('')+'</div>';
@@ -268,7 +279,28 @@ function startWithUser(user){
   me=user;$('app').hidden=false;
   if(!sessionStarted){sessionStarted=true;setTimeout(load,0)}
 }
-startWithUser(readNeonUser());
+async function restoreSessionAndStart(){
+  const cachedUser=readNeonUser();
+  if(!cachedUser){location.replace("../");return}
+  try{
+    // No basta con recuperar el perfil local: Neon debe restaurar la sesión
+    // antes de que el Data API pueda entregar datos protegidos por RLS.
+    const result=await sb.auth.getSession();
+    if(result?.error)throw result.error;
+    const activeUser=result?.data?.user||result?.data?.session?.user||result?.user;
+    if(!activeUser?.id)throw new Error('Neon no ha restaurado una sesión válida. Vuelve a iniciar sesión desde Mis apps.');
+    if(activeUser.id!==cachedUser.id)throw new Error('La sesión recuperada no corresponde al usuario guardado en Mis apps.');
+    startWithUser(activeUser);
+  }catch(error){
+    console.error('No se pudo restaurar la sesión en Horarios:',error);
+    sessionStarted=true;
+    startWithUser(cachedUser);
+    const panel='<div class="today"><b>No se ha podido recuperar tu sesión</b><div>'+esc(error?.message||'Comprueba la conexión con Neon.')+'</div><button class="btn pri" id="retrySession" style="margin-top:10px">Reintentar</button></div>';
+    $('cal').innerHTML=panel;$('sem').innerHTML=panel;$('act').innerHTML=panel;$('buz').innerHTML=panel;
+    $('retrySession').onclick=()=>{sessionStarted=false;restoreSessionAndStart()};
+  }
+}
+restoreSessionAndStart();
 $('out').onclick=async()=>{try{await sb.auth.signOut()}catch(e){console.warn("Cierre de sesión remoto",e)}finally{clearNeonAuth();location.replace("../")}};
 </script>
 </body>
