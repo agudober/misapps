@@ -152,9 +152,9 @@ async function load(){
   }catch(error){
     console.error('Error al sincronizar Horarios con Neon:',error);
     const message=esc(error?.message||'Error desconocido');
-    const panel='<div class="today"><b>No se han podido sincronizar tus datos</b><div>'+message+'</div><button class="btn pri" id="retryLoad" style="margin-top:10px">Reintentar</button></div>';
+    const panel='<div class="today"><b>No se han podido sincronizar tus datos</b><div>'+message+'</div><button class="btn pri retryLoad" style="margin-top:10px">Reintentar</button></div>';
     $('cal').innerHTML=panel;$('sem').innerHTML=panel;$('act').innerHTML=panel;$('buz').innerHTML=panel;
-    $('retryLoad').onclick=load;
+    ['cal','sem','act','buz'].forEach(id=>$(id).querySelector('.retryLoad').onclick=load);
   }
 }
 const mark=e=>(e.urgent?'❗':'')+((e.shares.length||e.owner_id!==me.id)?'🤝':'')+(e.repeat_dow?'🔁':'');
@@ -295,9 +295,9 @@ async function restoreSessionAndStart(){
     console.error('No se pudo restaurar la sesión en Horarios:',error);
     sessionStarted=true;
     startWithUser(cachedUser);
-    const panel='<div class="today"><b>No se ha podido recuperar tu sesión</b><div>'+esc(error?.message||'Comprueba la conexión con Neon.')+'</div><button class="btn pri" id="retrySession" style="margin-top:10px">Reintentar</button></div>';
+    const panel='<div class="today"><b>No se ha podido recuperar tu sesión</b><div>'+esc(error?.message||'Comprueba la conexión con Neon.')+'</div><button class="btn pri retrySession" style="margin-top:10px">Reintentar</button></div>';
     $('cal').innerHTML=panel;$('sem').innerHTML=panel;$('act').innerHTML=panel;$('buz').innerHTML=panel;
-    $('retrySession').onclick=()=>{sessionStarted=false;restoreSessionAndStart()};
+    ['cal','sem','act','buz'].forEach(id=>$(id).querySelector('.retrySession').onclick=()=>{sessionStarted=false;restoreSessionAndStart()});
   }
 }
 restoreSessionAndStart();
