@@ -96,6 +96,22 @@ export function clearNeonAuth() {
   } catch {}
 }
 
+// Envuelve el adapter de Neon para que Data API pueda usar el JWT persistido
+// cuando getSession() no logra reconstruir la cookie en una PWA de iOS.
+export function createPwaCompatibleAdapter(adapterFactory, options = {}) {
+  const buildAdapter = adapterFactory(options);
+  return (url, fetchOptions) => {
+    const adapter = buildAdapter(url, fetchOptions);
+    const getSessionToken = adapter.getJWTToken.bind(adapter);
+    adapter.getJWTToken = async (allowAnonymous) => {
+      const sessionToken = await getSessionToken(allowAnonymous);
+      if (sessionToken) return sessionToken;
+      return getNeonToken();
+    };
+    return adapter;
+  };
+}
+
 export async function getNeonToken() {
   try { return globalThis.localStorage.getItem(NEON_TOKEN_KEY); }
   catch { return null; }
