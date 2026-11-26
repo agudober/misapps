@@ -1,4 +1,18 @@
 export const NEON_TOKEN_KEY = "neon-auth-jwt-fallback";
+
+// Solo aceptamos un JWT compacto real: header.payload.signature.
+// Evita enviar a Neon valores como "Bearer ...", JSON o cabeceras mal interpretadas.
+function normalizeJwt(value) {
+  if (typeof value !== "string") return null;
+  let token = value.trim();
+  if (/^Bearer\s+/i.test(token)) token = token.replace(/^Bearer\s+/i, "").trim();
+  if ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'"))) {
+    token = token.slice(1, -1).trim();
+  }
+  const parts = token.split(".");
+  if (parts.length !== 3 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) return null;
+  return token;
+}
 const USER_KEY = "misapps-user-cache";
 let pwaFallbackInstalled = false;
 
@@ -53,9 +67,9 @@ export function installPwaAuthFallback(authUrl) {
 // antes de ejecutar este callback.
 export function captureNeonJwt(ctx) {
   const token =
-    ctx?.data?.session?.token ||
-    ctx?.response?.headers?.get?.("set-auth-jwt");
-  if (typeof token === "string" && token.length > 10) {
+    normalizeJwt(ctx?.data?.session?.token) ||
+    normalizeJwt(ctx?.response?.headers?.get?.("set-auth-jwt"));
+  if (token) {
     try { globalThis.localStorage?.setItem(NEON_TOKEN_KEY, token); } catch {}
   }
 }
@@ -64,14 +78,14 @@ export async function saveNeonAuthResult(result) {
   const payload = result?.data ?? result;
   const user = payload?.user || payload?.data?.user || result?.user;
   const sessionToken =
-    payload?.session?.token ||
-    payload?.token ||
-    result?.session?.token ||
-    result?.response?.headers?.get?.("set-auth-jwt");
+    normalizeJwt(payload?.session?.token) ||
+    normalizeJwt(payload?.token) ||
+    normalizeJwt(result?.session?.token) ||
+    normalizeJwt(result?.response?.headers?.get?.("set-auth-jwt"));
   if (!user?.id) {
     throw new Error("Neon no ha devuelto los datos del usuario después del acceso.");
   }
-  if (typeof sessionToken === "string" && sessionToken.length > 10) {
+  if (sessionToken) {
     try { globalThis.localStorage?.setItem(NEON_TOKEN_KEY, sessionToken); } catch {}
   }
   globalThis.localStorage.setItem(USER_KEY, JSON.stringify(user));
@@ -104,7 +118,7 @@ export function createPwaCompatibleAdapter(adapterFactory, options = {}) {
     const adapter = buildAdapter(url, fetchOptions);
     const getSessionToken = adapter.getJWTToken.bind(adapter);
     adapter.getJWTToken = async (allowAnonymous) => {
-      const sessionToken = await getSessionToken(allowAnonymous);
+      const sessionToken = normalizeJwt(await getSessionToken(allowAnonymous));
       if (sessionToken) return sessionToken;
       return getNeonToken();
     };
@@ -113,6 +127,9 @@ export function createPwaCompatibleAdapter(adapterFactory, options = {}) {
 }
 
 export async function getNeonToken() {
-  try { return globalThis.localStorage.getItem(NEON_TOKEN_KEY); }
-  catch { return null; }
+  try {
+    const token = normalizeJwt(globalThis.localStorage.getItem(NEON_TOKEN_KEY));
+    if (!token) globalThis.localStorage.removeItem(NEON_TOKEN_KEY);
+    return token;
+  } catch { return null; }
 }
