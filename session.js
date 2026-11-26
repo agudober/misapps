@@ -1,58 +1,31 @@
 export const NEON_TOKEN_KEY = "neon-auth-jwt-fallback";
 const USER_KEY = "misapps-user-cache";
 
-function isJwt(value) {
-  if (typeof value !== "string") return false;
-  const parts = value.trim().split(".");
-  return parts.length === 3 && parts.every(part => /^[A-Za-z0-9_-]+$/.test(part));
-}
-
 export function captureNeonJwt(ctx) {
-  // Only the set-auth-jwt response header contains the Data API JWT.
-  // ctx.data.session.token may otherwise be Better Auth's opaque session token.
-  const headerToken = ctx?.response?.headers?.get("set-auth-jwt");
-  const normalizedToken = ctx?.data?.session?.token;
-  const token = isJwt(headerToken) ? headerToken : (isJwt(normalizedToken) ? normalizedToken : null);
-  if (token) localStorage.setItem(NEON_TOKEN_KEY, token);
+  // Neon SDK injects the Data API JWT into the response session.
+  const token = ctx?.response?.headers?.get("set-auth-jwt") ||
+    ctx?.data?.session?.token;
+  if (typeof token === "string" && token.split(".").length === 3) {
+    localStorage.setItem(NEON_TOKEN_KEY, token);
+  }
 }
 
-export async function saveNeonAuthResult(result, auth) {
+export async function saveNeonAuthResult(result) {
   const payload = result?.data ?? result;
   const user = payload?.user || payload?.data?.user || result?.user;
-  let token = localStorage.getItem(NEON_TOKEN_KEY);
-
-  // Better Auth no garantiza el JWT de Data API en la respuesta de sign-in.
-  // Neon expone el JWT mediante el endpoint oficial /token (jwtClient).
-  if (!isJwt(token) && typeof auth?.token === "function") {
-    const tokenResult = await auth.token();
-    if (tokenResult?.error) throw tokenResult.error;
-    token = tokenResult?.data?.token || tokenResult?.token || null;
+  if (!user?.id) {
+    throw new Error("Neon no ha devuelto los datos del usuario después del acceso.");
   }
-
-  // Respaldo oficial de Neon: /get-session devuelve el JWT en set-auth-jwt.
-  if (!isJwt(token) && typeof auth?.getSession === "function") {
-    const sessionResult = await auth.getSession({
-      fetchOptions: { onSuccess: captureNeonJwt }
-    });
-    if (sessionResult?.error) throw sessionResult.error;
-    token = localStorage.getItem(NEON_TOKEN_KEY) ||
-      sessionResult?.data?.session?.token || null;
-  }
-
-  if (!isJwt(token) || !user?.id) {
-    clearNeonAuth();
-    throw new Error("Neon ha validado el acceso, pero su servicio JWT no ha devuelto un token válido para la base de datos. No se ha modificado ni borrado ningún dato.");
-  }
-  localStorage.setItem(NEON_TOKEN_KEY, token);
+  // Cache only the user identity for navigation between same-origin app sections.
+  // Data API credentials are refreshed and injected by the official Neon client.
   localStorage.setItem(USER_KEY, JSON.stringify(user));
   return user;
 }
 
 export function readNeonUser() {
   try {
-    const token = localStorage.getItem(NEON_TOKEN_KEY);
     const rawUser = localStorage.getItem(USER_KEY);
-    if (!isJwt(token) || !rawUser) return null;
+    if (!rawUser) return null;
     const user = JSON.parse(rawUser);
     return user?.id ? user : null;
   } catch {
@@ -65,7 +38,7 @@ export function clearNeonAuth() {
   localStorage.removeItem(USER_KEY);
 }
 
+// Kept for older pages during deployment; new database clients use Neon Auth directly.
 export async function getNeonToken() {
-  const token = localStorage.getItem(NEON_TOKEN_KEY);
-  return isJwt(token) ? token : null;
+  return null;
 }
