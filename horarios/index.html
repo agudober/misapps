@@ -112,7 +112,7 @@ dialog .chk{display:flex;gap:8px;align-items:center;color:var(--tx);font-size:15
 
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "../config.js";
-import {readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback} from "../session.js?v=12";
+import {readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback} from "../session.js?v=13";
 installPwaAuthFallback(NEON_AUTH_URL);
 const {createClient,BetterAuthVanillaAdapter}=await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
 const adapter=BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
