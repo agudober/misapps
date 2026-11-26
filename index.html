@@ -99,7 +99,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./config.js";
 import {APPS} from "./apps.js?v=4";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt} from "./session.js?v=8";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt} from "./session.js?v=9";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function show(user){
@@ -124,7 +124,7 @@ $("lbtn").onclick=async()=>{
   try{
     const result=await window.neonAuth.signIn.email({email,password});
     if(result?.error)throw result.error;
-    const signedUser=saveNeonAuthResult(result,window.neonAuth);
+    const signedUser=await saveNeonAuthResult(result);
     if(signedUser){
       $("recovery").hidden=true;
       show(signedUser);
