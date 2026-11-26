@@ -205,7 +205,7 @@ dialog button.p{color:#fff;background:#008f4c;border-color:#008f4c}
 
 <script type="module">
 import {NEON_AUTH_URL,NEON_DATA_API_URL} from "./neon-config.js";
-import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback} from "../session.js?v=13";
+import {saveNeonAuthResult,readNeonUser,clearNeonAuth,captureNeonJwt,installPwaAuthFallback,createPwaCompatibleAdapter} from "../session.js?v=14";
 
 if("serviceWorker" in navigator)window.addEventListener("load",async()=>{
   try{
@@ -233,7 +233,7 @@ document.querySelectorAll(".menu").forEach(m=>m.innerHTML=MENU);
 const placeholder=!NEON_AUTH_URL||!NEON_DATA_API_URL;
 if(!placeholder)installPwaAuthFallback(NEON_AUTH_URL);
 const {createClient,BetterAuthVanillaAdapter}=placeholder?{}:await import("https://esm.sh/@neondatabase/neon-js@0.9.0-beta?bundle");
-const adapter=placeholder?null:BetterAuthVanillaAdapter({fetchOptions:{onSuccess:captureNeonJwt}});
+const adapter=placeholder?null:createPwaCompatibleAdapter(BetterAuthVanillaAdapter,{fetchOptions:{onSuccess:captureNeonJwt}});
 const authClient=placeholder?null:createClient({auth:{url:NEON_AUTH_URL,adapter},dataApi:{url:NEON_DATA_API_URL}});
 
 const sb=placeholder?null:{auth:authClient.auth,from:(...args)=>authClient.from(...args),rpc:(...args)=>authClient.rpc(...args)};
