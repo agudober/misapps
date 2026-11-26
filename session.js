@@ -53,7 +53,16 @@ export function installPwaAuthFallback(authUrl) {
       const token = globalThis.localStorage?.getItem(NEON_TOKEN_KEY);
       if (token) headers.set("Authorization", "Bearer " + token);
 
-      return await originalFetch(input, { ...init, headers });
+      const response = await originalFetch(input, { ...init, headers });
+
+      // Captura el JWT directamente de la respuesta HTTP de Neon.
+      // No dependemos de que Better Auth exponga la sesión en result.data.
+      const responseJwt = normalizeJwt(response.headers.get("set-auth-jwt"));
+      if (responseJwt) {
+        try { globalThis.localStorage?.setItem(NEON_TOKEN_KEY, responseJwt); } catch {}
+      }
+
+      return response;
     } catch (error) {
       console.warn("No se pudo aplicar el JWT de recuperación de Neon", error);
       return originalFetch(input, init);
